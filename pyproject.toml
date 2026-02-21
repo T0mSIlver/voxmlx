@@ -15,7 +15,7 @@ dependencies = [
     "soundfile",
     "sounddevice",
     "huggingface-hub",
-    "mistral-common",
+    "mistral-common>=1.8.7",
     "sentencepiece",
 ]
 
