@@ -19,9 +19,13 @@ dependencies = [
     "sentencepiece",
 ]
 
+[project.optional-dependencies]
+server = ["fastapi", "uvicorn[standard]"]
+
 [tool.setuptools.dynamic]
 version = {attr = "voxmlx.__version__"}
 
 [project.scripts]
 voxmlx = "voxmlx:main"
 voxmlx-convert = "voxmlx.convert:main"
+voxmlx-serve = "voxmlx.server:main"

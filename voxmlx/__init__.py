@@ -63,9 +63,23 @@ def main():
     parser.add_argument("--audio", default=None, help="Path to audio file (omit to stream from mic)")
     parser.add_argument("--model", default="mlx-community/Voxtral-Mini-4B-Realtime-6bit", help="Model path or HF model ID")
     parser.add_argument("--temp", type=float, default=0.0, help="Sampling temperature (0 = greedy)")
+    parser.add_argument("--serve", action="store_true", help="Start WebSocket server (OpenAI Realtime API compatible)")
+    parser.add_argument("--port", type=int, default=8000, help="Server port (used with --serve)")
+    parser.add_argument("--host", default="127.0.0.1", help="Server host (used with --serve)")
     args = parser.parse_args()
 
-    if args.audio is not None:
+    if args.serve:
+        from .server import create_app
+        import logging
+        import uvicorn
+
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        )
+        app = create_app(args.model, args.temp)
+        uvicorn.run(app, host=args.host, port=args.port)
+    elif args.audio is not None:
         text = transcribe(
             args.audio,
             model_path=args.model,
