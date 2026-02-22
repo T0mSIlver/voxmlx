@@ -443,6 +443,7 @@ def create_app(model_path: str, temperature: float = 0.0):
             logger.exception("WebSocket error")
         finally:
             session.reset()
+            mx.clear_cache()
 
     return app
 
