@@ -159,9 +159,7 @@ def stream_transcribe(
                 left_pad = np.zeros(
                     N_LEFT_PAD_TOKENS * SAMPLES_PER_TOKEN, dtype=np.float32
                 )
-                n_feed = (
-                    (len(pending_audio) // SAMPLES_PER_TOKEN) * SAMPLES_PER_TOKEN
-                )
+                n_feed = (len(pending_audio) // SAMPLES_PER_TOKEN) * SAMPLES_PER_TOKEN
                 chunk = np.concatenate([left_pad, pending_audio[:n_feed]])
                 pending_audio = pending_audio[n_feed:]
                 n_audio_samples_fed += n_feed
@@ -178,10 +176,8 @@ def stream_transcribe(
                 first_cycle = False
 
             elif not first_cycle and len(pending_audio) >= SAMPLES_PER_TOKEN:
-                # Subsequent cycles: feed only new token-aligned audio
-                n_feed = (
-                    (len(pending_audio) // SAMPLES_PER_TOKEN) * SAMPLES_PER_TOKEN
-                )
+                # Subsequent cycles: feed all available audio
+                n_feed = (len(pending_audio) // SAMPLES_PER_TOKEN) * SAMPLES_PER_TOKEN
                 chunk = pending_audio[:n_feed]
                 pending_audio = pending_audio[n_feed:]
                 n_audio_samples_fed += n_feed
@@ -196,6 +192,7 @@ def stream_transcribe(
                     mx.eval(new_embeds)
                     if audio_embeds is not None:
                         audio_embeds = mx.concatenate([audio_embeds, new_embeds])
+                        mx.eval(audio_embeds)
                     else:
                         audio_embeds = new_embeds
 
@@ -289,6 +286,7 @@ def stream_transcribe(
                 mx.eval(new_embeds)
                 if audio_embeds is not None:
                     audio_embeds = mx.concatenate([audio_embeds, new_embeds])
+                    mx.eval(audio_embeds)
                 else:
                     audio_embeds = new_embeds
             if audio_embeds is not None:

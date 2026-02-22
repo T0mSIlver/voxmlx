@@ -1,3 +1,15 @@
+## What this fork changes
+
+- **WebSocket server** (`voxmlx-serve`) — OpenAI Realtime API-compatible endpoint for streaming transcription
+- **Incremental encoder** — streaming `encode_step()` processes audio chunk-by-chunk instead of re-encoding from scratch
+- **Incremental mel spectrogram** — `log_mel_spectrogram_step()` with STFT overlap handling and cached DFT matrices
+- **Rotating KV cache** — bounded sliding-window cache for the decoder to cap state growth
+- **Memory management** — caps MLX's Metal buffer cache at 4 GB (unbounded by default, was hitting 20+ GB) and clears GPU memory on disconnect
+
+See [CHANGES.md](CHANGES.md) for a detailed breakdown.
+
+---
+
 # voxmlx
 
 Realtime speech-to-text with

@@ -21,6 +21,7 @@ def generate(
 
     # 2. Encode audio
     audio_embeds = model.encode(mel)  # [N_audio, 3072]
+    mx.eval(audio_embeds)
     N_audio = audio_embeds.shape[0]
 
     # 3. Time conditioning (uses delay tokens only, not left pad)

@@ -91,6 +91,9 @@ def mel_filter_bank(
 
 
 _MEL_FILTERS = None
+_STFT_WINDOW = None
+_DFT_REAL = None
+_DFT_IMAG = None
 
 
 def _get_mel_filters() -> mx.array:
@@ -98,6 +101,19 @@ def _get_mel_filters() -> mx.array:
     if _MEL_FILTERS is None:
         _MEL_FILTERS = mx.array(mel_filter_bank())
     return _MEL_FILTERS
+
+
+def _get_stft_components() -> tuple[mx.array, mx.array, mx.array]:
+    global _STFT_WINDOW, _DFT_REAL, _DFT_IMAG
+    if _STFT_WINDOW is None:
+        _STFT_WINDOW = mx.array(np.hanning(N_FFT + 1)[:-1].astype(np.float32))
+        n_freqs = N_FFT // 2 + 1
+        k = mx.arange(n_freqs).astype(mx.float32)[:, None]
+        n = mx.arange(N_FFT).astype(mx.float32)[None, :]
+        angles = -2.0 * math.pi * (k @ n) / N_FFT
+        _DFT_REAL = mx.cos(angles)
+        _DFT_IMAG = mx.sin(angles)
+    return _STFT_WINDOW, _DFT_REAL, _DFT_IMAG
 
 
 def log_mel_spectrogram(audio: np.ndarray) -> mx.array:
@@ -175,9 +191,7 @@ def log_mel_spectrogram_step(
 
     audio_mx = mx.array(combined)
 
-    # STFT
-    window = mx.array(np.hanning(N_FFT + 1)[:-1].astype(np.float32))
-    n_freqs = N_FFT // 2 + 1
+    window, dft_real, dft_imag = _get_stft_components()
 
     # Frame the signal (no right padding — we just produce fewer trailing frames)
     n_frames = 1 + (audio_mx.shape[0] - N_FFT) // HOP_LENGTH
@@ -191,11 +205,6 @@ def log_mel_spectrogram_step(
     frames = audio_mx[indices] * window[None, :]
 
     # DFT
-    k = mx.arange(n_freqs).astype(mx.float32)[:, None]
-    n = mx.arange(N_FFT).astype(mx.float32)[None, :]
-    angles = -2.0 * math.pi * (k @ n) / N_FFT
-    dft_real = mx.cos(angles)
-    dft_imag = mx.sin(angles)
     spec_real = frames @ dft_real.T
     spec_imag = frames @ dft_imag.T
 

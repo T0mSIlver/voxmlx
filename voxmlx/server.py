@@ -119,9 +119,7 @@ class StreamingSession:
             left_pad = np.zeros(
                 N_LEFT_PAD_TOKENS * SAMPLES_PER_TOKEN, dtype=np.float32
             )
-            n_feed = (
-                len(self.pending_audio) // SAMPLES_PER_TOKEN
-            ) * SAMPLES_PER_TOKEN
+            n_feed = (len(self.pending_audio) // SAMPLES_PER_TOKEN) * SAMPLES_PER_TOKEN
             chunk = np.concatenate([left_pad, self.pending_audio[:n_feed]])
             self.pending_audio = self.pending_audio[n_feed:]
             self.n_audio_samples_fed += n_feed
@@ -145,9 +143,7 @@ class StreamingSession:
             return True
 
         elif not self.first_cycle and len(self.pending_audio) >= SAMPLES_PER_TOKEN:
-            n_feed = (
-                len(self.pending_audio) // SAMPLES_PER_TOKEN
-            ) * SAMPLES_PER_TOKEN
+            n_feed = (len(self.pending_audio) // SAMPLES_PER_TOKEN) * SAMPLES_PER_TOKEN
             chunk = self.pending_audio[:n_feed]
             self.pending_audio = self.pending_audio[n_feed:]
             self.n_audio_samples_fed += n_feed
@@ -170,6 +166,7 @@ class StreamingSession:
                     self.audio_embeds = mx.concatenate(
                         [self.audio_embeds, new_embeds]
                     )
+                    mx.eval(self.audio_embeds)
                 else:
                     self.audio_embeds = new_embeds
             return True
@@ -313,6 +310,7 @@ class StreamingSession:
                 self.audio_embeds = mx.concatenate(
                     [self.audio_embeds, new_embeds]
                 )
+                mx.eval(self.audio_embeds)
             else:
                 self.audio_embeds = new_embeds
 

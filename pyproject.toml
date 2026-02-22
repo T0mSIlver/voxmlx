@@ -22,6 +22,9 @@ dependencies = [
 [project.optional-dependencies]
 server = ["fastapi", "uvicorn[standard]"]
 
+[tool.setuptools.packages.find]
+include = ["voxmlx"]
+
 [tool.setuptools.dynamic]
 version = {attr = "voxmlx.__version__"}
 

@@ -3,6 +3,8 @@ __version__ = "0.0.2"
 import argparse
 from pathlib import Path
 
+import mlx.core as mx
+
 from mistral_common.tokens.tokenizers.base import SpecialTokenPolicy
 from mistral_common.tokens.tokenizers.tekken import Tekkenizer
 
@@ -27,6 +29,12 @@ def _build_prompt_tokens(
 
 
 def load_model(model_path: str = "mlx-community/Voxtral-Mini-4B-Realtime-6bit"):
+    # Cap MLX's Metal memory pool. By default MLX retains freed GPU buffers
+    # indefinitely for reuse, which can bloat resident memory to 20+ GB.
+    # Setting a cache limit lets MLX reuse buffers up to this cap and frees
+    # the rest back to the system.
+    mx.metal.set_cache_limit(4 * 1024 * 1024 * 1024)  # 4 GB
+
     if not Path(model_path).exists():
         model_path = download_model(model_path)
     else:
