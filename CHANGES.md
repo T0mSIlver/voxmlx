@@ -2,6 +2,17 @@
 
 All changes relative to upstream [awni/voxmlx](https://github.com/awni/voxmlx).
 
+## Fix: Use encoder-configured KV window in incremental `encode_step()`
+
+Long streaming sessions in `voxmlx-serve` could degrade semantically after several
+sentences when the encoder KV cache window was set to a large fixed value.
+The incremental encoder now uses the model's configured encoder sliding window
+(`self.encoder.sliding_window`, `750` for Voxtral Mini Realtime) instead of a
+hard-coded oversized cache.
+
+**`voxmlx/model.py`**
+- `encode_step()`: `RotatingKVCache(self.encoder.sliding_window)` instead of a fixed large value
+
 ## Fix: Pin `mistral-common>=1.8.7`
 
 `voxmlx` uses `Tekkenizer.get_special_token()` which was introduced in `mistral-common` [v1.8.7](https://github.com/mistralai/mistral-common/pull/164). Without a version pin, pip can resolve to an older version where this method doesn't exist.
