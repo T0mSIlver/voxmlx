@@ -3,7 +3,7 @@
 - **WebSocket server** (`voxmlx-serve`) — OpenAI Realtime API-compatible endpoint for streaming transcription
 - **Memory management** — caps MLX's Metal buffer cache at 4 GB (unbounded by default, was hitting 20+ GB), materializes lazy arrays after concat, and clears GPU memory on disconnect
 - **DFT matrix caching** — precomputes STFT components instead of rebuilding per `log_mel_spectrogram_step()` call
-- **Encoder KV window alignment** — incremental encoder cache now uses the model's configured `encoder.sliding_window` (750 for Voxtral Mini Realtime), which fixes long-stream semantic drift
+- **Encoder KV window alignment** — incremental encoder cache now uses the model's configured `encoder.sliding_window` (750 for Voxtral Mini Realtime), which fixes long-stream semantic drift (see upstream [issue #7](https://github.com/awni/voxmlx/issues/7) and [PR #4](https://github.com/awni/voxmlx/pull/4))
 
 ---
 
