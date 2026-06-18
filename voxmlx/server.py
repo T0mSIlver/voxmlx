@@ -126,7 +126,14 @@ class StreamingSession:
         if planned.chunk is None:
             return False
 
-        self.pending_audio = planned.pending_audio
+        pending_audio = planned.pending_audio
+        if (
+            incoming_audio is not None
+            and pending_audio.size
+            and np.shares_memory(pending_audio, incoming_audio)
+        ):
+            pending_audio = pending_audio.copy()
+        self.pending_audio = pending_audio
         self.n_audio_samples_fed += planned.n_real_samples
         self.first_cycle = planned.first_cycle
 
