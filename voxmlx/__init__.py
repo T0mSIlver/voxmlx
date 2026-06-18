@@ -3,22 +3,16 @@ __version__ = "0.0.2"
 import argparse
 from pathlib import Path
 
-import mlx.core as mx
 
-from mistral_common.tokens.tokenizers.base import SpecialTokenPolicy
-from mistral_common.tokens.tokenizers.tekken import Tekkenizer
+def _load_tokenizer(model_path: Path):
+    from mistral_common.tokens.tokenizers.tekken import Tekkenizer
 
-from .generate import generate
-from .weights import download_model, load_model as _load_weights
-
-
-def _load_tokenizer(model_path: Path) -> Tekkenizer:
     tekken_path = model_path / "tekken.json"
     return Tekkenizer.from_file(str(tekken_path))
 
 
 def _build_prompt_tokens(
-    sp: Tekkenizer,
+    sp,
     n_left_pad_tokens: int = 32,
     num_delay_tokens: int = 6,
 ) -> tuple[list[int], int]:
@@ -29,6 +23,10 @@ def _build_prompt_tokens(
 
 
 def load_model(model_path: str = "mlx-community/Voxtral-Mini-4B-Realtime-6bit"):
+    import mlx.core as mx
+
+    from .weights import download_model, load_model as _load_weights
+
     # Cap MLX's Metal memory pool. By default MLX retains freed GPU buffers
     # indefinitely for reuse, which can bloat resident memory to 20+ GB.
     # Setting a cache limit lets MLX reuse buffers up to this cap and frees
@@ -50,6 +48,10 @@ def transcribe(
     model_path: str = "mlx-community/Voxtral-Mini-4B-Realtime-6bit",
     temperature: float = 0.0,
 ) -> str:
+    from mistral_common.tokens.tokenizers.base import SpecialTokenPolicy
+
+    from .generate import generate
+
     model, sp, config = load_model(model_path)
 
     prompt_tokens, n_delay_tokens = _build_prompt_tokens(sp)

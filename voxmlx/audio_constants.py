@@ -1,0 +1,6 @@
+SAMPLE_RATE = 16000
+N_FFT = 400
+HOP_LENGTH = 160
+N_MELS = 128
+GLOBAL_LOG_MEL_MAX = 1.5
+SAMPLES_PER_TOKEN = HOP_LENGTH * 2 * 4  # hop * conv_stride * downsample = 1280

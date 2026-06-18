@@ -22,6 +22,12 @@ dependencies = [
 [project.optional-dependencies]
 server = ["fastapi", "uvicorn[standard]"]
 
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-codspeed",
+]
+
 [tool.setuptools.packages.find]
 include = ["voxmlx"]
 
