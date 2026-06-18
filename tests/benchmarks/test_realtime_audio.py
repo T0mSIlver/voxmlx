@@ -71,20 +71,83 @@ def test_plan_stream_audio_chunk_first_cycle(benchmark):
     )
 
 
+def test_plan_stream_audio_chunk_steady_state_view(benchmark):
+    pending_audio = np.empty(0, dtype=np.float32)
+    incoming_audio = _audio_samples(4 * SAMPLES_PER_TOKEN + 123)
+    expected_feed = 4 * SAMPLES_PER_TOKEN
+
+    planned = benchmark(
+        plan_stream_audio_chunk,
+        pending_audio,
+        incoming_audio,
+        False,
+    )
+
+    assert planned.n_real_samples == expected_feed
+    assert planned.first_cycle is False
+    assert planned.chunk is not None
+    assert planned.chunk.shape == (expected_feed,)
+    assert np.shares_memory(planned.chunk, incoming_audio)
+    assert np.shares_memory(planned.pending_audio, incoming_audio)
+    assert planned.scratch_buffer is None
+    np.testing.assert_array_equal(planned.chunk, incoming_audio[:expected_feed])
+
+
+def test_plan_stream_audio_chunk_split_reuses_scratch(benchmark):
+    pending_audio = _audio_samples(SAMPLES_PER_TOKEN // 2)
+    incoming_audio = _audio_samples(4 * SAMPLES_PER_TOKEN + 123)
+    scratch = np.empty(4 * SAMPLES_PER_TOKEN, dtype=np.float32)
+    combined = np.concatenate([pending_audio, incoming_audio])
+    expected_feed = 4 * SAMPLES_PER_TOKEN
+
+    planned = benchmark(
+        plan_stream_audio_chunk,
+        pending_audio,
+        incoming_audio,
+        False,
+        SAMPLES_PER_TOKEN,
+        N_LEFT_PAD_TOKENS,
+        scratch,
+    )
+
+    assert planned.n_real_samples == expected_feed
+    assert planned.first_cycle is False
+    assert planned.chunk is not None
+    assert planned.chunk.shape == (expected_feed,)
+    assert planned.scratch_buffer is scratch
+    assert np.shares_memory(planned.chunk, scratch)
+    assert np.shares_memory(planned.pending_audio, incoming_audio)
+    np.testing.assert_array_equal(planned.chunk, combined[:expected_feed])
+
+
 def test_plan_final_audio_chunk(benchmark):
     pending_audio = _audio_samples(2 * SAMPLES_PER_TOKEN + 320)
     right_pad_samples = N_RIGHT_PAD_TOKENS * SAMPLES_PER_TOKEN
     expected_feed = 2 * SAMPLES_PER_TOKEN
+    scratch = np.empty(expected_feed + right_pad_samples, dtype=np.float32)
 
-    planned = benchmark(plan_final_audio_chunk, pending_audio, False)
+    planned = benchmark(
+        plan_final_audio_chunk,
+        pending_audio,
+        False,
+        SAMPLES_PER_TOKEN,
+        N_LEFT_PAD_TOKENS,
+        N_RIGHT_PAD_TOKENS,
+        scratch,
+    )
 
     assert planned.n_real_samples == expected_feed
     assert planned.first_cycle is False
     assert planned.pending_audio.shape == (0,)
     assert planned.chunk is not None
     assert planned.chunk.shape == (expected_feed + right_pad_samples,)
+    assert planned.scratch_buffer is scratch
+    assert np.shares_memory(planned.chunk, scratch)
     np.testing.assert_array_equal(planned.chunk[: pending_audio.size], pending_audio)
     np.testing.assert_array_equal(
         planned.chunk[pending_audio.size :],
-        np.zeros(expected_feed + right_pad_samples - pending_audio.size, dtype=np.float32),
+        np.zeros(
+            expected_feed + right_pad_samples - pending_audio.size,
+            dtype=np.float32,
+        ),
     )

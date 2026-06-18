@@ -51,6 +51,7 @@ class StreamingSession:
 
         self.n_layers = len(model.language_model.layers)
         self.sliding_window = 8192
+        self.audio_chunk_scratch = None
 
         self._reset_state()
 
@@ -116,8 +117,12 @@ class StreamingSession:
     def _encode_audio(self, incoming_audio: np.ndarray | None = None):
         """Encode pending audio into embeddings. Returns True if new embeds produced."""
         planned = plan_stream_audio_chunk(
-            self.pending_audio, incoming_audio, self.first_cycle
+            self.pending_audio,
+            incoming_audio,
+            self.first_cycle,
+            scratch_buffer=self.audio_chunk_scratch,
         )
+        self.audio_chunk_scratch = planned.scratch_buffer
         if planned.chunk is None:
             return False
 
@@ -247,7 +252,12 @@ class StreamingSession:
         was_first_cycle = self.first_cycle
 
         # Flush any remaining pending audio + right padding
-        planned = plan_final_audio_chunk(self.pending_audio, was_first_cycle)
+        planned = plan_final_audio_chunk(
+            self.pending_audio,
+            was_first_cycle,
+            scratch_buffer=self.audio_chunk_scratch,
+        )
+        self.audio_chunk_scratch = planned.scratch_buffer
         self.pending_audio = np.zeros(0, dtype=np.float32)
         self.first_cycle = planned.first_cycle
         if planned.chunk is None:
